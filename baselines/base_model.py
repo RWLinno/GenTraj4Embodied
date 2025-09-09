@@ -1,6 +1,5 @@
 """
 Base classes for trajectory generation models
-所有轨迹生成模型的统一基类
 """
 
 import torch
@@ -13,8 +12,8 @@ import logging
 
 class BaseTrajectoryModel(nn.Module, ABC):
     """
-    所有轨迹生成模型的基类
-    定义统一的接口和通用功能
+    Base class for all trajectory generation models
+    Defines unified interface and common functionality
     """
     
     def __init__(self, config: Dict[str, Any]):
@@ -30,15 +29,15 @@ class BaseTrajectoryModel(nn.Module, ABC):
     def forward(self, start_pose: torch.Tensor, end_pose: torch.Tensor, 
                 context: Optional[torch.Tensor] = None) -> torch.Tensor:
         """
-        前向传播
+        Forward pass
         
         Args:
-            start_pose: 起始位姿 [batch_size, input_dim]
-            end_pose: 终止位姿 [batch_size, input_dim] 
-            context: 可选的上下文信息 [batch_size, context_dim]
+            start_pose: Starting pose [batch_size, input_dim]
+            end_pose: Ending pose [batch_size, input_dim] 
+            context: Optional context information [batch_size, context_dim]
             
         Returns:
-            生成的轨迹 [batch_size, seq_length, output_dim]
+            Generated trajectory [batch_size, seq_length, output_dim]
         """
         pass
     
@@ -46,15 +45,15 @@ class BaseTrajectoryModel(nn.Module, ABC):
     def generate_trajectory(self, start_pose: np.ndarray, end_pose: np.ndarray,
                           num_points: int = 50, **kwargs) -> np.ndarray:
         """
-        生成轨迹的推理接口
+        Trajectory generation inference interface
         
         Args:
-            start_pose: 起始位姿 [input_dim]
-            end_pose: 终止位姿 [input_dim]
-            num_points: 轨迹点数量
+            start_pose: Starting pose [input_dim]
+            end_pose: Ending pose [input_dim]
+            num_points: Number of trajectory points
             
         Returns:
-            生成的轨迹 [num_points, output_dim]
+            Generated trajectory [num_points, output_dim]
         """
         pass
     
@@ -62,26 +61,26 @@ class BaseTrajectoryModel(nn.Module, ABC):
     def compute_loss(self, predictions: torch.Tensor, targets: torch.Tensor,
                     **kwargs) -> torch.Tensor:
         """
-        计算损失函数
+        Compute loss function
         
         Args:
-            predictions: 模型预测 [batch_size, seq_length, output_dim]
-            targets: 目标轨迹 [batch_size, seq_length, output_dim]
+            predictions: Model predictions [batch_size, seq_length, output_dim]
+            targets: Target trajectory [batch_size, seq_length, output_dim]
             
         Returns:
-            损失值
+            Loss value
         """
         pass
     
     def train_step(self, batch: Dict[str, torch.Tensor]) -> Dict[str, float]:
         """
-        训练步骤
+        Training step
         
         Args:
-            batch: 批次数据
+            batch: Batch data
             
         Returns:
-            包含损失值的字典
+            Dictionary containing loss values
         """
         self.train()
         
@@ -89,23 +88,23 @@ class BaseTrajectoryModel(nn.Module, ABC):
         end_pose = batch['end_pose'].to(self.device)
         trajectory = batch['trajectory'].to(self.device)
         
-        # 前向传播
+        # Forward pass
         predictions = self.forward(start_pose, end_pose)
         
-        # 计算损失
+        # Compute loss
         loss = self.compute_loss(predictions, trajectory)
         
         return {'loss': loss.item()}
     
     def evaluate_step(self, batch: Dict[str, torch.Tensor]) -> Dict[str, float]:
         """
-        评估步骤
+        Evaluation step
         
         Args:
-            batch: 批次数据
+            batch: Batch data
             
         Returns:
-            包含评估指标的字典
+            Dictionary containing evaluation metrics
         """
         self.eval()
         
@@ -114,13 +113,13 @@ class BaseTrajectoryModel(nn.Module, ABC):
             end_pose = batch['end_pose'].to(self.device)
             trajectory = batch['trajectory'].to(self.device)
             
-            # 前向传播
+            # Forward pass
             predictions = self.forward(start_pose, end_pose)
             
-            # 计算损失
+            # Compute loss
             loss = self.compute_loss(predictions, trajectory)
             
-            # 计算额外的评估指标
+            # Compute additional evaluation metrics
             metrics = self.compute_metrics(predictions, trajectory)
             metrics['loss'] = loss.item()
             
@@ -128,22 +127,22 @@ class BaseTrajectoryModel(nn.Module, ABC):
     
     def compute_metrics(self, predictions: torch.Tensor, targets: torch.Tensor) -> Dict[str, float]:
         """
-        计算评估指标
+        Compute evaluation metrics
         
         Args:
-            predictions: 模型预测 [batch_size, seq_length, output_dim]
-            targets: 目标轨迹 [batch_size, seq_length, output_dim]
+            predictions: Model predictions [batch_size, seq_length, output_dim]
+            targets: Target trajectory [batch_size, seq_length, output_dim]
             
         Returns:
-            评估指标字典
+            Dictionary of evaluation metrics
         """
         metrics = {}
         
-        # 均方误差
+        # Mean squared error
         mse = torch.mean((predictions - targets) ** 2).item()
         metrics['mse'] = mse
         
-        # 轨迹平滑度 (加速度的方差)
+        # Trajectory smoothness (variance of acceleration)
         pred_acc = torch.diff(predictions, n=2, dim=1)
         target_acc = torch.diff(targets, n=2, dim=1)
         
@@ -152,7 +151,7 @@ class BaseTrajectoryModel(nn.Module, ABC):
         
         metrics['smoothness_ratio'] = pred_smoothness / (target_smoothness + 1e-8)
         
-        # 终点误差
+        # End point error
         end_error = torch.mean((predictions[:, -1] - targets[:, -1]) ** 2).item()
         metrics['end_error'] = end_error
         
@@ -160,10 +159,10 @@ class BaseTrajectoryModel(nn.Module, ABC):
     
     def get_model_info(self) -> Dict[str, Any]:
         """
-        获取模型信息
+        Get model information
         
         Returns:
-            模型信息字典
+            Model information dictionary
         """
         total_params = sum(p.numel() for p in self.parameters())
         trainable_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
@@ -180,10 +179,10 @@ class BaseTrajectoryModel(nn.Module, ABC):
     
     def to_device(self, device: str):
         """
-        移动模型到指定设备
+        Move model to specified device
         
         Args:
-            device: 目标设备
+            device: Target device
         """
         self.device = device
         self.to(device)
@@ -192,7 +191,7 @@ class BaseTrajectoryModel(nn.Module, ABC):
 
 class ClassicalTrajectoryModel(BaseTrajectoryModel):
     """
-    经典方法的基类
+    Base class for classical methods
     """
     
     def __init__(self, config: Dict[str, Any]):
@@ -200,9 +199,9 @@ class ClassicalTrajectoryModel(BaseTrajectoryModel):
         self.method_type = config.get('method_type', 'interpolation')
 
 
-class LinearArchitectureModel(BaseTrajectoryModel):
+class FundamentalArchitectureModel(BaseTrajectoryModel):
     """
-    线性架构模型的基类 (RNN, LSTM, GRU等)
+    Base class for fundamental architecture models (MLP, CNN, etc.)
     """
     
     def __init__(self, config: Dict[str, Any]):
@@ -212,35 +211,33 @@ class LinearArchitectureModel(BaseTrajectoryModel):
         self.dropout = config.get('dropout', 0.1)
 
 
-class TransformerVariantModel(BaseTrajectoryModel):
+class ProbabilisticGenerativeModel(BaseTrajectoryModel):
     """
-    Transformer变体模型的基类
+    Base class for probabilistic generative models
     """
     
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
-        self.d_model = config.get('d_model', 256)
-        self.nhead = config.get('nhead', 8)
+        self.latent_dim = config.get('latent_dim', 64)
+        self.num_samples = config.get('num_samples', 1)
+        self.dropout = config.get('dropout', 0.1)
+
+
+class SequentialModelingModel(BaseTrajectoryModel):
+    """
+    Base class for sequential modeling methods (RNN, LSTM, Transformer, etc.)
+    """
+    
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(config)
+        self.hidden_dim = config.get('hidden_dim', 256)
         self.num_layers = config.get('num_layers', 6)
         self.dropout = config.get('dropout', 0.1)
 
 
-class DiffusionVariantModel(BaseTrajectoryModel):
+class HybridHierarchicalModel(BaseTrajectoryModel):
     """
-    扩散模型变体的基类
-    """
-    
-    def __init__(self, config: Dict[str, Any]):
-        super().__init__(config)
-        self.num_timesteps = config.get('num_timesteps', 1000)
-        self.beta_schedule = config.get('beta_schedule', 'linear')
-        self.noise_schedule = config.get('noise_schedule', 'cosine')
-        self.dropout = config.get('dropout', 0.1)
-
-
-class RLBasedModel(BaseTrajectoryModel):
-    """
-    强化学习模型的基类
+    Base class for hybrid and hierarchical models
     """
     
     def __init__(self, config: Dict[str, Any]):

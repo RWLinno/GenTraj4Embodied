@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """
 Train all trajectory generation models
-训练所有轨迹生成模型
 """
 
 import sys
 import argparse
 from pathlib import Path
 
-# 添加项目根目录到Python路径
+# Add project root directory to Python path
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
@@ -18,34 +17,34 @@ from src.data.data_generator import TrajectoryDataGenerator
 from src.data.dataset import TrajectoryDataset
 from src.training.trainer import ModelTrainer
 
-# 导入所有模型
-from baselines.diffusion_policy.model import DiffusionPolicyModel
-from baselines.transformer.model import TransformerModel
-from baselines.vae.model import VAEModel
-from baselines.mlp.model import MLPModel
-from baselines.gflownets.model import GFlowNetModel
+# Import all models - Fixed import paths
+from baselines.diffusion_policy_model import DiffusionPolicyModel
+from baselines.transformer_model import TransformerModel
+from baselines.vae_model import VAEModel
+from baselines.mlp_model import MLPModel
+from baselines.gflownets_model import GFlowNetModel
 
 
 def main():
-    parser = argparse.ArgumentParser(description="训练所有轨迹生成模型")
-    parser.add_argument("--config", type=str, default="config.yaml", help="配置文件路径")
-    parser.add_argument("--output-dir", type=str, default="experiments", help="输出目录")
+    parser = argparse.ArgumentParser(description="Train all trajectory generation models")
+    parser.add_argument("--config", type=str, default="config.yaml", help="Configuration file path")
+    parser.add_argument("--output-dir", type=str, default="experiments", help="Output directory")
     
     args = parser.parse_args()
     
-    # 加载配置
+    # Load configuration
     config = load_config(args.config)
     config['experiment']['output_dir'] = args.output_dir
     
-    # 设置日志
+    # Setup logging
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     logger = setup_logger("train_all_models", output_dir / "logs")
     
-    # 生成数据（如果不存在）
+    # Generate data (if not exists)
     data_dir = output_dir / "data"
     if not (data_dir / "train.h5").exists():
-        logger.info("生成训练数据...")
+        logger.info("Generating training data...")
         data_generator = TrajectoryDataGenerator(config['data'])
         train_data, val_data, test_data = data_generator.generate_all_splits()
         
@@ -53,7 +52,7 @@ def main():
         data_generator.save_data(val_data, data_dir / "val.h5")
         data_generator.save_data(test_data, data_dir / "test.h5")
     
-    # 模型类映射
+    # Model class mapping - Fixed model names
     model_classes = {
         'diffusion_policy': DiffusionPolicyModel,
         'transformer': TransformerModel,
@@ -62,13 +61,13 @@ def main():
         'gflownets': GFlowNetModel
     }
     
-    # 训练所有启用的模型
+    # Train all enabled models
     for model_name, model_class in model_classes.items():
         if config['models'][model_name]['enabled']:
-            logger.info(f"开始训练模型: {model_name}")
+            logger.info(f"Starting training for model: {model_name}")
             
             try:
-                # 创建数据集
+                # Create dataset
                 dataset = TrajectoryDataset(
                     train_path=data_dir / "train.h5",
                     val_path=data_dir / "val.h5",
@@ -77,10 +76,10 @@ def main():
                     mode='train'
                 )
                 
-                # 创建模型
+                # Create model
                 model = model_class(config['models'][model_name])
                 
-                # 创建训练器
+                # Create trainer
                 trainer = ModelTrainer(
                     model=model,
                     dataset=dataset,
@@ -88,21 +87,21 @@ def main():
                     logger=logger
                 )
                 
-                # 训练模型
+                # Train model
                 trainer.train()
                 
-                # 保存模型
+                # Save model
                 checkpoint_dir = output_dir / "checkpoints" / model_name
                 checkpoint_dir.mkdir(parents=True, exist_ok=True)
                 trainer.save_checkpoint(checkpoint_dir / "best_model.pth")
                 
-                logger.info(f"模型 {model_name} 训练完成")
+                logger.info(f"Model {model_name} training completed")
                 
             except Exception as e:
-                logger.error(f"训练模型 {model_name} 时出错: {str(e)}")
+                logger.error(f"Error training model {model_name}: {str(e)}")
                 continue
     
-    logger.info("所有模型训练完成!")
+    logger.info("All model training completed!")
 
 
 if __name__ == "__main__":

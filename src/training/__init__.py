@@ -1,8 +1,9 @@
 """
-Training modules for trajectory generation
-轨迹生成训练模块
+Training utilities for trajectory generation
 """
 
 from .trainer import ModelTrainer
 
-__all__ = ["ModelTrainer"]
+__all__ = [
+    'ModelTrainer'
+]
