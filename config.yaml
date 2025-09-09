@@ -1,0 +1,236 @@
+# 3D End-Effector Trajectory Generation Configuration
+
+# 项目基本设置
+project:
+  name: "trajectory_generation"
+  version: "1.0.0"
+  description: "Comparative study of generative models for 3D trajectory generation"
+  
+# 数据设置
+data:
+  # 数据生成参数
+  generation:
+    num_trajectories: 10000
+    num_modalities: 3  # 每个任务的模态数量
+    trajectory_length: 50  # 轨迹点数量
+    workspace_bounds:
+      x: [-1.0, 1.0]
+      y: [-1.0, 1.0] 
+      z: [0.2, 1.2]
+    time_horizon: 5.0  # 轨迹总时间(秒)
+    
+  # 任务类型
+  tasks:
+    - name: "pick_and_place"
+      weight: 0.4
+      description: "抓取和放置任务"
+    - name: "pouring"
+      weight: 0.3
+      description: "倾倒任务"
+    - name: "assembly"
+      weight: 0.3
+      description: "装配任务"
+      
+  # 数据增强
+  augmentation:
+    noise_level: 0.01
+    rotation_noise: 0.05  # 弧度
+    temporal_jitter: 0.1
+    
+  # 数据分割
+  split:
+    train: 0.8
+    val: 0.1
+    test: 0.1
+
+# 模型配置 - 扩展到25个模型
+models:
+  # Diffusion Policy
+  diffusion_policy:
+    name: "DiffusionPolicy"
+    enabled: true
+    architecture:
+      unet_dim: 256
+      num_layers: 4
+      time_embed_dim: 128
+      horizon: 16
+      num_steps: 100
+      beta_schedule: "cosine"
+      prediction_type: "epsilon"
+      clip_sample: true
+      max_trajectory_length: 1000
+      use_trajectory_embedding: false
+    training:
+      batch_size: 32
+      learning_rate: 1e-4
+      num_epochs: 200
+      warmup_steps: 1000
+      
+  # Transformer
+  transformer:
+    name: "TrajectoryTransformer"
+    enabled: true
+    architecture:
+      d_model: 512
+      nhead: 8
+      num_layers: 6
+      dim_feedforward: 2048
+      dropout: 0.1
+      max_seq_length: 100
+    training:
+      batch_size: 64
+      learning_rate: 5e-4
+      num_epochs: 150
+      warmup_steps: 500
+      
+  # VAE
+  vae:
+    name: "TrajectoryVAE"
+    enabled: true
+    architecture:
+      encoder_dims: [512, 256, 128]
+      decoder_dims: [128, 256, 512]
+      latent_dim: 64
+      beta: 1.0  # KL散度权重
+    training:
+      batch_size: 128
+      learning_rate: 1e-3
+      num_epochs: 100
+      
+  # MLP
+  mlp:
+    name: "TrajectoryMLP"
+    enabled: true
+    architecture:
+      hidden_dims: [1024, 512, 256, 128]
+      activation: "relu"
+      dropout: 0.2
+    training:
+      batch_size: 256
+      learning_rate: 1e-3
+      num_epochs: 80
+      
+  # GFlowNets
+  gflownets:
+    name: "TrajectoryGFlowNet"
+    enabled: true
+    architecture:
+      hidden_dim: 256
+      num_layers: 4
+      num_components: 8
+    training:
+      batch_size: 64
+      learning_rate: 1e-4
+      num_epochs: 120
+
+# 训练设置
+training:
+  # 通用训练参数
+  device: "cpu"  # cuda, cpu, auto
+  mixed_precision: true
+  gradient_clip_norm: 1.0
+  save_every: 10  # 每N个epoch保存一次
+  eval_every: 5   # 每N个epoch评估一次
+  
+  # 早停设置
+  early_stopping:
+    patience: 20
+    min_delta: 1e-4
+    
+  # 学习率调度
+  scheduler:
+    type: "cosine"  # cosine, step, exponential
+    warmup_epochs: 10
+    
+  # 数据加载
+  dataloader:
+    num_workers: 4
+    pin_memory: true
+    persistent_workers: true
+
+# 评估设置
+evaluation:
+  metrics:
+    # 轨迹质量指标
+    - name: "smoothness"
+      weight: 0.25
+      description: "轨迹平滑度"
+    - name: "task_completion"
+      weight: 0.3
+      description: "任务完成度"
+    - name: "diversity"
+      weight: 0.2
+      description: "轨迹多样性"
+    - name: "feasibility"
+      weight: 0.25
+      description: "物理可行性"
+      
+  # 生成参数
+  generation:
+    num_samples: 1000
+    temperature: 1.0
+    top_k: 50
+    
+  # 可视化设置
+  visualization:
+    save_plots: true
+    plot_format: "png"
+    dpi: 300
+    show_3d: true
+
+# 实验设置
+experiment:
+  # 实验跟踪
+  tracking:
+    use_wandb: true
+    project_name: "trajectory-generation"
+    tags: ["robotics", "trajectory", "generative-models"]
+    
+  # 随机种子
+  seed: 42
+  
+  # 输出目录
+  output_dir: "experiments"
+  
+  # 并行设置
+  parallel:
+    num_processes: 1
+    distributed: false
+
+# 可视化设置
+visualization:
+  # 3D轨迹可视化
+  trajectory_3d:
+    figsize: [12, 8]
+    point_size: 2
+    line_width: 1.5
+    alpha: 0.8
+    
+  # 比较图表
+  comparison:
+    metrics_plot: true
+    box_plot: true
+    violin_plot: true
+    
+  # 动画设置
+  animation:
+    fps: 30
+    duration: 5.0
+    save_gif: true
+
+# 日志设置
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/trajectory_generation.log"
+  
+# 硬件设置
+hardware:
+  # GPU设置
+  gpu:
+    memory_fraction: 0.9
+    allow_growth: true
+    
+  # CPU设置  
+  cpu:
+    num_threads: 8
