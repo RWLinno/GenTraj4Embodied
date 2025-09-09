@@ -126,7 +126,7 @@ models:
 # 训练设置
 training:
   # 通用训练参数
-  device: "cpu"  # cuda, cpu, auto
+  device: "cuda:1"  # cuda, cpu, auto
   mixed_precision: true
   gradient_clip_norm: 1.0
   save_every: 10  # 每N个epoch保存一次

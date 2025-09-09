@@ -47,25 +47,21 @@ GenTraj4Embodied/
 ## Quick Start
 
 ### 1. Environment Setup
-
 ```bash
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# or venv\Scripts\activate  # Windows
+git clone https://github.com/RWLinno/GenTraj4Embodied.git
+cd GenTraj4Embodied
 
-# Install dependencies
+conda create -n GTL python==3.11
+conda activate GTL
 pip install -r requirements.txt
 
-# Note: The project has been tested and verified to work with:
-# - Python 3.8+
-# - PyTorch 1.12+
-# - CUDA 11.6+ (optional, CPU training supported)
-# All model import issues and compatibility problems have been resolved
+# or venv
+python -m venv venv
+source venv/bin/activate  # for Linux/Mac
+pip install -r requirements.txt
 ```
 
 ### 2. Data Generation
-
 Generate multi-modal synthetic trajectory dataset:
 
 ```bash

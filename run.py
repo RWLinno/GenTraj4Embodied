@@ -449,13 +449,13 @@ def print_model_categories(config: Dict[str, Any]):
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="3D End-Effector Trajectory Generation (5-Category Framework)")
-    parser.add_argument("--config", type=str, default="config_5categories.yaml", help="配置文件路径")
+    parser.add_argument("--config", type=str, default="config.yaml", help="配置文件路径")
     parser.add_argument("--mode", type=str, choices=["generate", "train", "evaluate", "visualize", "test", "sample", "all"], 
                        default="test", help="运行模式")
     parser.add_argument("--model", type=str, help="指定模型名称 (仅在train/evaluate模式下有效)")
     parser.add_argument("--output-dir", type=str, help="输出目录 (覆盖配置文件设置)")
     parser.add_argument("--seed", type=int, help="随机种子 (覆盖配置文件设置)")
-    parser.add_argument("--device", type=str, choices=["cpu", "cuda", "auto"], help="计算设备")
+    parser.add_argument("--device", type=str, choices=["cpu", "cuda", "auto"], default="auto", help="计算设备")
     parser.add_argument("--debug", action="store_true", help="启用调试模式")
     parser.add_argument("--list-models", action="store_true", help="列出所有可用模型")
     
@@ -491,7 +491,7 @@ def main():
     
     # 设置日志
     log_level = logging.DEBUG if args.debug else logging.INFO
-    logger = setup_logger("trajectory_generation_5categories", output_dir / "logs", level=log_level)
+    logger = setup_logger("trajectory_generation", output_dir / "logs", level=log_level)
     
     # 设置随机种子
     set_seed(config['experiment']['seed'])

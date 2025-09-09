@@ -16,7 +16,7 @@ wandb>=0.15.0
 tensorboard>=2.10.0
 
 # Robotics and 3D
-robotics-toolbox-python>=1.0.0
+roboticstoolbox-python
 spatialmath-python>=1.0.0
 trimesh>=3.15.0
 open3d>=0.16.0
