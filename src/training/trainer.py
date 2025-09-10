@@ -11,78 +11,68 @@ from typing import Dict, Any, Optional
 import logging
 import time
 from tqdm import tqdm
-import wandb
+try:
+    import wandb
+    WANDB_AVAILABLE = True
+except ImportError:
+    WANDB_AVAILABLE = False
+    wandb = None
 from ..utils.logger import TrainingLogger
 
 
 class ModelTrainer:
-    """模型训练器"""
-    
     def __init__(self, 
                  model: nn.Module,
                  dataset: Any,
                  config: Dict[str, Any],
-                 logger: logging.Logger):
-        """
-        初始化训练器
-        
-        Args:
-            model: 要训练的模型
-            dataset: 数据集
-            config: 训练配置
-            logger: 日志记录器
-        """
+                 logger: logging.Logger,
+                 model_name: str = "model",
+                 seed: int = 42,
+                 output_dir: str = "experiments"):
         self.model = model
         self.dataset = dataset
         self.config = config
         self.logger = logger
+        self.model_name = model_name
+        self.seed = seed
+        self.output_dir = output_dir
         self.training_logger = TrainingLogger(logger)
         
-        # 设备配置
         self.device = torch.device(config.get('device', 'cuda' if torch.cuda.is_available() else 'cpu'))
         self.model.to(self.device)
         
-        # 训练参数
         self.num_epochs = config.get('num_epochs', 100)
         self.batch_size = config.get('batch_size', 32)
         self.learning_rate = config.get('learning_rate', 1e-3)
         self.weight_decay = config.get('weight_decay', 1e-4)
         
-        # 优化器和调度器
         self.optimizer = self._create_optimizer()
         self.scheduler = self._create_scheduler()
         
-        # 训练状态
         self.current_epoch = 0
         self.best_val_loss = float('inf')
         self.train_losses = []
         self.val_losses = []
         
-        # 早停
         self.early_stopping = config.get('early_stopping', {})
         self.patience = self.early_stopping.get('patience', 20)
         self.min_delta = self.early_stopping.get('min_delta', 1e-4)
         self.patience_counter = 0
         
-        # 混合精度训练
         self.use_amp = config.get('mixed_precision', False)
         if self.use_amp:
             self.scaler = torch.cuda.amp.GradScaler()
         
-        # 梯度裁剪
         self.gradient_clip_norm = config.get('gradient_clip_norm', 1.0)
         
-        # 保存和评估频率
         self.save_every = config.get('save_every', 10)
         self.eval_every = config.get('eval_every', 5)
         
-        # Wandb追踪
-        self.use_wandb = config.get('tracking', {}).get('use_wandb', False)
+        self.use_wandb = config.get('tracking', {}).get('use_wandb', False) and WANDB_AVAILABLE
         
         self.logger.info(f"训练器初始化完成，设备: {self.device}")
     
     def _create_optimizer(self) -> torch.optim.Optimizer:
-        """创建优化器"""
         optimizer_type = self.config.get('optimizer', 'adam')
         
         if optimizer_type.lower() == 'adam':
@@ -306,13 +296,17 @@ class ModelTrainer:
         if self.scheduler:
             checkpoint['scheduler_state_dict'] = self.scheduler.state_dict()
         
+        # 创建checkpoint目录
+        checkpoint_dir = Path(self.output_dir) / "checkpoints" / f"{self.model_name}_{self.seed}"
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        
         # 保存最新检查点
-        checkpoint_path = Path(f"checkpoint_epoch_{epoch}.pth")
+        checkpoint_path = checkpoint_dir / f"{self.model_name}_ckpt_epoch_{epoch}.pth"
         torch.save(checkpoint, checkpoint_path)
         
         # 如果是最佳模型，额外保存
         if val_loss is not None and val_loss <= self.best_val_loss:
-            best_path = Path("best_model.pth")
+            best_path = checkpoint_dir / f"{self.model_name}_ckpt_best.pth"
             torch.save(checkpoint, best_path)
             self.logger.info(f"保存最佳模型，验证损失: {val_loss:.6f}")
     

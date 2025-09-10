@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
-from ..base_model import BaseTrajectoryModel
+from .base_model import BaseTrajectoryModel
 
 
 class MultiHeadAttention(nn.Module):

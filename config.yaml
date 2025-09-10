@@ -1,12 +1,8 @@
-# 3D End-Effector Trajectory Generation Configuration
-
-# 项目基本设置
 project:
   name: "trajectory_generation"
   version: "1.0.0"
   description: "Comparative study of generative models for 3D trajectory generation"
-  
-# 数据设置
+
 data:
   # 数据生成参数
   generation:
@@ -43,7 +39,6 @@ data:
     val: 0.1
     test: 0.1
 
-# 模型配置 - 扩展到25个模型
 models:
   # Diffusion Policy
   diffusion_policy:
@@ -108,12 +103,12 @@ models:
     training:
       batch_size: 256
       learning_rate: 1e-3
-      num_epochs: 80
+      num_epochs: 10
       
   # GFlowNets
   gflownets:
     name: "TrajectoryGFlowNet"
-    enabled: true
+    enabled: false
     architecture:
       hidden_dim: 256
       num_layers: 4
@@ -122,14 +117,41 @@ models:
       batch_size: 64
       learning_rate: 1e-4
       num_epochs: 120
+      
+  # Classical Methods
+  linear_interpolation:
+    name: "LinearInterpolation"
+    enabled: true
+    architecture:
+      interpolation_type: "linear"
+      add_noise: false
+      noise_std: 0.01
+    training:
+      batch_size: 1
+      learning_rate: 1e-3
+      num_epochs: 1
+      
+  dmp:
+    name: "DynamicMovementPrimitive"
+    enabled: true
+    architecture:
+      num_basis: 25
+      alpha_y: 25.0
+      beta_y: 6.25
+      alpha_x: 1.0
+      dt: 0.02
+    training:
+      batch_size: 32
+      learning_rate: 1e-3
+      num_epochs: 50
 
 # 训练设置
 training:
   # 通用训练参数
-  device: "cuda:1"  # cuda, cpu, auto
+  device: "auto"  # cuda, cpu, auto
   mixed_precision: true
   gradient_clip_norm: 1.0
-  save_every: 10  # 每N个epoch保存一次
+  save_every: 1  # 每N个epoch保存一次
   eval_every: 5   # 每N个epoch评估一次
   
   # 早停设置

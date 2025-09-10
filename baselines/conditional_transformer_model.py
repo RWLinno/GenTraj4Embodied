@@ -377,7 +377,7 @@ class ConditionalTransformerModel(BaseTrajectoryModel):
         return smoothed
     
     def generate_with_waypoints(self, start_pose: np.ndarray, end_pose: np.ndarray,
-                              waypoints: List[np.ndarray], waypoint_times: List[int]) -> np.ndarray:
+                              waypoints: list[np.ndarray], waypoint_times: list[int]) -> np.ndarray:
         """根据路径点生成轨迹"""
         self.eval()
         

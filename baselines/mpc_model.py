@@ -13,7 +13,7 @@ from typing import Dict, Any, Optional, Tuple
 from scipy.optimize import minimize
 import cvxpy as cp
 
-from ...base_model import BaseTrajectoryModel
+from .base_model import BaseTrajectoryModel
 
 
 class MPCTrajectoryModel(BaseTrajectoryModel):

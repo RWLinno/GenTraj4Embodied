@@ -12,7 +12,7 @@ from pathlib import Path
 
 # 添加父目录到路径
 sys.path.append(str(Path(__file__).parent.parent))
-from base_model import LinearArchitectureModel
+from .base_model import LinearArchitectureModel
 
 
 class LSTMTrajectoryModel(LinearArchitectureModel):

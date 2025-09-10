@@ -19,7 +19,7 @@ import numpy as np
 from typing import Dict, Any, Tuple, List, Optional
 import cvxpy as cp
 
-from ...base_model import BaseTrajectoryModel
+from .base_model import BaseTrajectoryModel
 
 
 class DynamicsNetwork(nn.Module):

@@ -18,7 +18,7 @@ import networkx as nx
 from sklearn.neighbors import NearestNeighbors
 from scipy.spatial.distance import euclidean
 
-from ...base_model import BaseTrajectoryModel
+from .base_model import BaseTrajectoryModel
 
 
 class PRMTrajectoryModel(BaseTrajectoryModel):

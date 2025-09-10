@@ -9,8 +9,13 @@ checkpoints/
 datasets/
 baselines/
 src/prompts/
+experiments/
+visualizations/
 
 # file
+*.h5
+*.pth
+*.png
 *.zip
 *.npz
 *.npy

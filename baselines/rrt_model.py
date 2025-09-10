@@ -14,7 +14,7 @@ import random
 from scipy.spatial.distance import euclidean
 from scipy.interpolate import interp1d
 
-from ...base_model import BaseTrajectoryModel
+from .base_model import BaseTrajectoryModel
 
 
 class RRTNode:

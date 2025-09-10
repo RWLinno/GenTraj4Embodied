@@ -29,8 +29,8 @@ import torch.nn.functional as F
 from typing import Dict, Any, Optional, Tuple, Union
 import numpy as np
 import math
-from .network import DiffusionUNet
-from .scheduler import DDPMScheduler
+from .diffusion_policy_network import DiffusionUNet
+from .diffusion_policy_scheduler import DDPMScheduler
 
 
 class DiffusionPolicyModel(nn.Module):

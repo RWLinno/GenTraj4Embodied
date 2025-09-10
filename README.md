@@ -86,37 +86,18 @@ Train individual models or all models simultaneously:
 # Train all models with default configuration
 python scripts/train_all_models.py --config config.yaml
 
-# Train specific model
-python run.py --model diffusion_policy --mode train --config config.yaml
-python run.py --model transformer --mode train --config config.yaml
-python run.py --model vae --mode train --config config.yaml
+# for specific model
 python run.py --model mlp --mode train --config config.yaml
-python run.py --model gflownets --mode train --config config.yaml
+python run.py --model mlp --mode evaluate
+python run.py --model mlp --mode test
 
 # Advanced training options
-python run.py --model diffusion_policy --mode train \
-              --batch_size 32 \
-              --learning_rate 1e-4 \
-              --epochs 100 \
-              --gpu 0
+python run.py --model diffusion_policy --mode train --batch_size 32 --learning_rate 1e-4 --epochs 100 --gpu 0
 ```
 
 ### 4. Evaluation and Analysis
-
 Comprehensive model evaluation and comparison:
-
 ```bash
-# Evaluate all trained models
-python scripts/evaluate_models.py --config config.yaml
-
-# Generate detailed comparison report
-python scripts/evaluate_models.py --config config.yaml --detailed_analysis
-
-# Visualize results and trajectories
-python scripts/visualize_results.py --experiment_dir experiments/results/
-
-# Generate 3D trajectory animations
-python scripts/visualize_results.py --experiment_dir experiments/results/ --animate
 ```
 ## Data Format and Specifications
 

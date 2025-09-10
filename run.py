@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-3D End-Effector Trajectory Generation - Updated Main Runner
-主运行脚本，支持新的5大类分类和扁平化baselines结构
-"""
 
 import argparse
 import logging
@@ -15,7 +11,6 @@ import numpy as np
 import random
 from typing import Dict, Any
 
-# 添加src目录到Python路径
 sys.path.append(str(Path(__file__).parent / "src"))
 
 from src.data.data_generator import TrajectoryDataGenerator
@@ -26,12 +21,8 @@ from src.utils.logger import setup_logger
 from src.utils.config import load_config, validate_config
 from src.utils.visualization import TrajectoryVisualizer
 
-# 导入所有模型 - 新的5大类分类框架 + 扁平化结构
 try:
-    # 使用统一的baselines导入
     from baselines import get_model_class, list_available_models, MODEL_REGISTRY
-    
-    # 如果统一导入失败，则使用单独导入
     UNIFIED_IMPORT = True
 except ImportError:
     UNIFIED_IMPORT = False
@@ -40,58 +31,58 @@ except ImportError:
     # 单独导入所有模型
     try:
         # Classical Methods
-        from baselines.linear_interpolation_model import LinearInterpolationModel
-        from baselines.spline_interpolation_model import SplineInterpolationModel
-        from baselines.dmp_model import DMPModel
-        from baselines.promp_model import ProMPModel
-        from baselines.gmm_model import GMMModel
+        from baselines.LinearInterpolation import LinearInterpolationModel
+        from baselines.SplineInterpolation import SplineInterpolationModel
+        from baselines.DMP import DMPTrajectoryModel as DMPModel
+        from baselines.ProMP import ProMPTrajectoryModel as ProMPModel
+        from baselines.GMM import GMMTrajectoryModel as GMMModel
         
         # Fundamental Architectures
-        from baselines.mlp_model import MLPModel
-        from baselines.cnn_model import CNNModel
-        from baselines.gnn_model import GNNModel
-        from baselines.vae_model import VAEModel
+        from baselines.mlp_model import MLPTrajectoryModel as MLPModel
+        from baselines.cnn_model import CNNTrajectoryModel as CNNModel
+        from baselines.gnn_model import GNNTrajectoryModel as GNNModel
+        from baselines.vae_model import VAETrajectoryModel as VAEModel
         from baselines.conditional_vae_model import ConditionalVAEModel
         
         # Probabilistic Generative Models
         from baselines.diffusion_policy_model import DiffusionPolicyModel
-        from baselines.ddpm_model import DDPMModel
+        from baselines.ddpm_model import DDPMTrajectoryModel as DDPMModel
         from baselines.ddim_model import DDIMModel
         from baselines.difftraj_model import DiffTrajModel
-        from baselines.score_based_model import ScoreBasedModel
-        from baselines.conditional_diffusion_model import ConditionalDiffusionModel
-        from baselines.latent_diffusion_model import LatentDiffusionModel
+        from baselines.score_based_model import ScoreBasedTrajectoryModel as ScoreBasedModel
+        from baselines.conditional_diffusion_model import ConditionalDiffusionTrajectoryModel as ConditionalDiffusionModel
+        from baselines.latent_diffusion_model import LatentDiffusionTrajectoryModel as LatentDiffusionModel
         from baselines.normalizing_flows_model import NormalizingFlowsModel
-        from baselines.gflownets_model import GFlowNetsModel
+        from baselines.gflownets_model import GFlowNetTrajectoryModel as GFlowNetsModel
         from baselines.conditional_gan_model import ConditionalGANModel
         from baselines.conditional_flow_model import ConditionalFlowModel
         from baselines.kinematic_diffusion_model import KinematicDiffusionModel
         
         # Sequential Modeling
-        from baselines.lstm_model import LSTMModel
-        from baselines.gru_model import GRUModel
-        from baselines.rnn_model import RNNModel
-        from baselines.transformer_model import TransformerModel
+        from baselines.lstm_model import LSTMTrajectoryModel as LSTMModel
+        from baselines.gru_model import GRUTrajectoryModel as GRUModel
+        from baselines.rnn_model import RNNTrajectoryModel as RNNModel
+        from baselines.transformer_model import TransformerTrajectoryModel as TransformerModel
         from baselines.gpt_model import GPTModel
         from baselines.bert_model import BERTModel
         from baselines.decision_transformer_model import DecisionTransformerModel
-        from baselines.mdn_model import MDNModel
-        from baselines.seq2seq_model import Seq2SeqModel
+        from baselines.mdn_model import MDNTrajectoryModel as MDNModel
+        from baselines.seq2seq_model import Seq2SeqTrajectoryModel as Seq2SeqModel
         from baselines.conditional_transformer_model import ConditionalTransformerModel
         
         # Hybrid_Hierarchical
-        from baselines.policy_gradient_model import PolicyGradientModel
-        from baselines.actor_critic_model import ActorCriticModel
-        from baselines.ppo_model import PPOModel
-        from baselines.imitation_learning_model import ImitationLearningModel
-        from baselines.inverse_rl_model import InverseRLModel
-        from baselines.il_rl_hybrid_model import ILRLHybridModel
+        from baselines.policy_gradient_model import PolicyGradientTrajectoryModel as PolicyGradientModel
+        from baselines.actor_critic_model import ActorCriticTrajectoryModel as ActorCriticModel
+        from baselines.ppo_model import PPOTrajectoryModel as PPOModel
+        from baselines.imitation_learning_model import ImitationLearningTrajectoryModel as ImitationLearningModel
+        from baselines.inverse_rl_model import InverseRLTrajectoryModel as InverseRLModel
+        from baselines.il_rl_hybrid_model import ILRLTrajectoryModel as ILRLHybridModel
         from baselines.mpc_learning_model import MPCLearningModel
         
         # Additional models
-        from baselines.mpc_model import MPCModel
-        from baselines.rrt_model import RRTModel
-        from baselines.prm_model import PRMModel
+        from baselines.mpc_model import MPCTrajectoryModel as MPCModel
+        from baselines.rrt_model import RRTTrajectoryModel as RRTModel
+        from baselines.prm_model import PRMTrajectoryModel as PRMModel
         
     except ImportError as e:
         print(f"警告: 部分模型导入失败: {e}")
@@ -110,7 +101,6 @@ def set_seed(seed: int):
 
 
 def get_model_class_fallback(model_name: str):
-    """备用的模型类获取函数 - 新的5大类分类框架"""
     model_classes = {
         # 1. Classical Methods
         'linear_interpolation': LinearInterpolationModel,
@@ -192,10 +182,8 @@ def generate_data(config: Dict[str, Any], logger: logging.Logger):
     
     data_generator = TrajectoryDataGenerator(config['data'])
     
-    # 生成训练、验证和测试数据
     train_data, val_data, test_data = data_generator.generate_all_splits()
     
-    # 保存数据
     data_dir = Path(config['experiment']['output_dir']) / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
     
@@ -207,14 +195,11 @@ def generate_data(config: Dict[str, Any], logger: logging.Logger):
     
     return train_data, val_data, test_data
 
-
 def train_model(config: Dict[str, Any], model_name: str, logger: logging.Logger):
-    """训练指定模型"""
     logger.info(f"开始训练模型: {model_name}")
     
-    # 检查模型是否启用
     if model_name not in config['models']:
-        logger.error(f"模型 {model_name} 不在配置文件中")
+        logger.error(f"模型 {model_name} 不在配置文件中，可用模型: {list(config['models'].keys())}")
         return None
         
     if not config['models'][model_name]['enabled']:
@@ -222,7 +207,6 @@ def train_model(config: Dict[str, Any], model_name: str, logger: logging.Logger)
         return None
     
     try:
-        # 加载数据
         data_dir = Path(config['experiment']['output_dir']) / "data"
         dataset = TrajectoryDataset(
             train_path=data_dir / "train.h5",
@@ -231,7 +215,6 @@ def train_model(config: Dict[str, Any], model_name: str, logger: logging.Logger)
             config=config['data']
         )
         
-        # 创建模型
         model_class = get_model_class_unified(model_name)
         model_config = config['models'][model_name].copy()
         model_config['trajectory_length'] = config['data']['generation']['trajectory_length']
@@ -239,21 +222,26 @@ def train_model(config: Dict[str, Any], model_name: str, logger: logging.Logger)
         
         logger.info(f"模型 {model_name} 创建成功，参数数量: {sum(p.numel() for p in model.parameters())}")
         
-        # 创建训练器
         trainer = ModelTrainer(
             model=model,
             dataset=dataset,
             config=config['training'],
-            logger=logger
+            logger=logger,
+            model_name=model_name,
+            seed=config['experiment']['seed'],
+            output_dir=config['experiment']['output_dir']
         )
         
-        # 开始训练
         trainer.train()
         
-        # 保存模型
-        checkpoint_dir = Path(config['experiment']['output_dir']) / "checkpoints" / model_name
+        # 保存模型 - 使用新的命名规范：模型名_种子/模型名_ckpt_epoch_X.pth
+        seed = config['experiment']['seed']
+        checkpoint_dir = Path(config['experiment']['output_dir']) / "checkpoints" / f"{model_name}_{seed}"
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
-        trainer.save_checkpoint(checkpoint_dir / "best_model.pth")
+        
+        # 保存最终模型
+        final_checkpoint_path = checkpoint_dir / f"{model_name}_ckpt_final.pth"
+        trainer.save_checkpoint(final_checkpoint_path)
         
         logger.info(f"模型 {model_name} 训练完成")
         return model
@@ -266,9 +254,7 @@ def train_model(config: Dict[str, Any], model_name: str, logger: logging.Logger)
 def evaluate_model(config: Dict[str, Any], model_name: str, logger: logging.Logger):
     """评估指定模型"""
     logger.info(f"开始评估模型: {model_name}")
-    
     try:
-        # 加载数据
         data_dir = Path(config['experiment']['output_dir']) / "data"
         dataset = TrajectoryDataset(
             train_path=data_dir / "train.h5",
@@ -277,13 +263,13 @@ def evaluate_model(config: Dict[str, Any], model_name: str, logger: logging.Logg
             config=config['data']
         )
         
-        # 加载模型
         model_class = get_model_class_unified(model_name)
         model_config = config['models'][model_name].copy()
         model_config['trajectory_length'] = config['data']['generation']['trajectory_length']
         model = model_class(model_config)
         
-        checkpoint_path = Path(config['experiment']['output_dir']) / "checkpoints" / model_name / "best_model.pth"
+        seed = config['experiment']['seed']
+        checkpoint_path = Path(config['experiment']['output_dir']) / "checkpoints" / f"{model_name}_{seed}" / f"{model_name}_ckpt_final.pth"
         if checkpoint_path.exists():
             model.load_state_dict(torch.load(checkpoint_path, map_location='cpu'))
             logger.info(f"加载模型检查点: {checkpoint_path}")
@@ -291,7 +277,6 @@ def evaluate_model(config: Dict[str, Any], model_name: str, logger: logging.Logg
             logger.warning(f"未找到模型检查点: {checkpoint_path}")
             return None
         
-        # 创建评估器
         evaluator = ModelEvaluator(
             model=model,
             dataset=dataset,
@@ -299,10 +284,8 @@ def evaluate_model(config: Dict[str, Any], model_name: str, logger: logging.Logg
             logger=logger
         )
         
-        # 进行评估
         results = evaluator.evaluate()
         
-        # 保存结果
         results_dir = Path(config['experiment']['output_dir']) / "results" / model_name
         results_dir.mkdir(parents=True, exist_ok=True)
         
@@ -318,7 +301,6 @@ def evaluate_model(config: Dict[str, Any], model_name: str, logger: logging.Logg
 
 
 def test_model_import(config: Dict[str, Any], logger: logging.Logger):
-    """测试所有模型的导入和初始化"""
     logger.info("开始测试模型导入和初始化...")
     
     success_count = 0
@@ -330,15 +312,12 @@ def test_model_import(config: Dict[str, Any], logger: logging.Logger):
             continue
             
         try:
-            # 尝试获取模型类
             model_class = get_model_class_unified(model_name)
             
-            # 尝试创建模型实例
             model_config = config['models'][model_name].copy()
             model_config['trajectory_length'] = config['data']['generation']['trajectory_length']
             model = model_class(model_config)
             
-            # 获取模型信息
             model_info = model.get_model_info()
             
             logger.info(f"✓ {model_name}: {model_info.get('model_type', 'Unknown')} - {model_info.get('total_parameters', 0)} 参数")
@@ -361,7 +340,6 @@ def generate_sample_trajectories(config: Dict[str, Any], logger: logging.Logger)
     """为所有模型生成样本轨迹"""
     logger.info("开始生成样本轨迹...")
     
-    # 定义测试用的起点和终点
     start_pose = np.array([0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 1.0])  # x, y, z, qx, qy, qz, qw
     end_pose = np.array([1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0])
     
@@ -454,6 +432,9 @@ def main():
                        default="test", help="运行模式")
     parser.add_argument("--model", type=str, help="指定模型名称 (仅在train/evaluate模式下有效)")
     parser.add_argument("--output-dir", type=str, help="输出目录 (覆盖配置文件设置)")
+    parser.add_argument("--batch-size", type=int, help="批量大小 (覆盖配置文件设置)")
+    parser.add_argument("--epochs", type=int, help="训练轮数 (覆盖配置文件设置)")
+    parser.add_argument("--num-samples", type=int, help="生成样本数量 (覆盖配置文件设置)")
     parser.add_argument("--seed", type=int, help="随机种子 (覆盖配置文件设置)")
     parser.add_argument("--device", type=str, choices=["cpu", "cuda", "auto"], default="auto", help="计算设备")
     parser.add_argument("--debug", action="store_true", help="启用调试模式")
@@ -469,7 +450,7 @@ def main():
         print(f"配置文件加载失败: {e}")
         # 使用默认配置
         config = {
-            'experiment': {'output_dir': 'experiments_5categories', 'seed': 42},
+            'experiment': {'output_dir': 'experiments/output', 'seed': 42},
             'training': {'device': 'cpu'},
             'data': {'generation': {'trajectory_length': 50}},
             'models': {},
@@ -484,7 +465,7 @@ def main():
         config['experiment']['seed'] = args.seed
     if args.device:
         config['training']['device'] = args.device
-    
+        
     # 设置输出目录
     output_dir = Path(config['experiment']['output_dir'])
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -499,6 +480,7 @@ def main():
     # 设置设备
     if config['training']['device'] == 'auto':
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        config['training']['device'] = device
     else:
         device = config['training']['device']
     

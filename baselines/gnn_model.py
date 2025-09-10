@@ -19,7 +19,7 @@ import numpy as np
 from typing import Dict, Any, Tuple, List, Optional
 import math
 
-from ...base_model import BaseTrajectoryModel
+from .base_model import BaseTrajectoryModel
 
 
 class GraphConvLayer(nn.Module):

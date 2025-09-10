@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import math
-from ..base_model import BaseTrajectoryModel
+from .base_model import BaseTrajectoryModel
 
 
 def get_timestep_embedding(timesteps, embedding_dim):

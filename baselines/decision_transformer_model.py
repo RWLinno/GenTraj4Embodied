@@ -13,7 +13,7 @@ import numpy as np
 from typing import Dict, Any, Optional, Tuple
 import math
 
-from ...base_model import BaseTrajectoryModel
+from .base_model import BaseTrajectoryModel
 
 
 class PositionalEncoding(nn.Module):

@@ -20,7 +20,7 @@ from typing import Dict, Any, Tuple, List, Optional
 from collections import deque
 import random
 
-from ...base_model import BaseTrajectoryModel
+from .base_model import BaseTrajectoryModel
 
 
 class PolicyNetwork(nn.Module):

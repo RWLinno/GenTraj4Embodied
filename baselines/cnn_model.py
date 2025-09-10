@@ -17,7 +17,7 @@ import torch.nn.functional as F
 import numpy as np
 from typing import Dict, Any, Tuple, List, Optional
 
-from ...base_model import BaseTrajectoryModel
+from .base_model import BaseTrajectoryModel
 
 
 class Conv1DBlock(nn.Module):

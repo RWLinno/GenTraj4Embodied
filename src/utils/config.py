@@ -106,7 +106,7 @@ def _validate_data_config(data_config: Dict[str, Any]):
 
 def _validate_models_config(models_config: Dict[str, Any]):
     """验证模型配置"""
-    supported_models = ['diffusion_policy', 'transformer', 'vae', 'mlp', 'gflownets']
+    supported_models = ['linear_interpolation', 'spline_interpolation', 'dmp', 'promp', 'gmm', 'mlp', 'cnn', 'vae', 'lstm', 'gru', 'transformer', 'diffusion_policy', 'gflownets']
     
     for model_name in models_config:
         if model_name not in supported_models:
