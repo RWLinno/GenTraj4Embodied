@@ -2,23 +2,15 @@
 Trajectory Generation Methods for Embodied Robotic Arms: Taxonomy, Progress, and Prospects
 
 ## Installation
-
-1. Clone the repository:
 ```bash
 git clone https://github.com/RWLinno/GenTraj4Embodied.git
 cd GenTraj4Embodied
-```
 
-2. Install dependencies:
-```bash
+conda create -n GTL python==3.11
+conda activate GTL
 pip install -r requirements.txt
-```
 
-3. Install the package in development mode:
-```bash
-pip install -e .
 ```
-
 ## Quick Start
 
 ### Training All Models
