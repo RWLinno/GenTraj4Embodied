@@ -56,4 +56,17 @@ class InspectorTests(unittest.TestCase):
             self.assertNotIn('</script><script>alert(1)</script>',html)
             self.assertIn('length_metadata_mismatch',(output/'report.json').read_text())
 
+
+class DiagnosticTests(unittest.TestCase):
+    def test_histograms_keep_outliers_and_account_for_missing(self):
+        from inspector.audit import diagnostic_data
+        report={'sources':[{'file':'a'}], 'records':[{'source':'a','task':'x','max_speed':v} for v in [0,1,2,100]]+[{'source':'a','task':'y'}]}
+        d=diagnostic_data(report);h=d['histograms']['max_speed']
+        self.assertEqual(sum(h['counts']),4)
+        self.assertEqual(h['excluded'],1)
+        self.assertEqual(h['edges'][-1],100)
+        self.assertEqual(h['quantiles']['p50'],1.5)
+        self.assertEqual(d['splits'][0]['tasks'],{'x':4,'y':1})
+        self.assertIsNone(d['histograms']['max_acceleration'])
+
 if __name__=='__main__':unittest.main()

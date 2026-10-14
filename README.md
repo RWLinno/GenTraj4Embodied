@@ -90,3 +90,8 @@ Useful extensions include adapters for other dataset layouts, angular-velocity d
 ## License
 
 Apache-2.0, as in the original repository. The new inspector and report template use the same license. Historical prototype code has not been certified by the inspector tests; the unpublished manuscript and old result tables are not evidence of validated comparative performance.
+
+
+## Research context and diagnostics · 2026-10-14
+
+[中文研究评估与低成本路线](RESEARCH_REPORT.zh-CN.md) covers verified evidence, diffusion / flow-matching / VLA context, practical next steps, and stopping criteria. The live report now includes distribution diagnostics; research references are context, not implemented baselines.

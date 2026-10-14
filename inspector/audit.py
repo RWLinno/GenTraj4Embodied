@@ -7,7 +7,7 @@ from collections import Counter, defaultdict
 import h5py
 import numpy as np
 
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 
 
 def sha256(path):
@@ -143,6 +143,26 @@ def audit(inputs):
         'scope':'Input files only. No collision, IK, robot success, angular dynamics, or distribution-quality test. Endpoint grouping rounds poses to 6 decimals and ignores task/scene metadata. Zero flags is not a robot-safety certificate.'}
 
 
+def diagnostic_data(report):
+    """Compact plotting data; all readable numeric records, no outlier filtering."""
+    records = report['records']
+    result = {'splits': [], 'histograms': {}}
+    for source in report['sources']:
+        subset = [r for r in records if r['source'] == source['file']]
+        result['splits'].append({'source': source['file'], 'records': len(subset),
+                                'tasks': dict(Counter(r.get('task', 'unknown') for r in subset))})
+    for key in ['max_speed', 'max_acceleration']:
+        values = [r[key] for r in records if key in r and r[key] is not None and np.isfinite(r[key])]
+        if not values:
+            result['histograms'][key] = None
+            continue
+        counts, edges = np.histogram(values, bins=16)
+        result['histograms'][key] = {'counts': counts.tolist(), 'edges': edges.tolist(),
+            'n': len(values), 'excluded': len(records)-len(values),
+            'quantiles': dict(zip(['p05','p50','p95'], np.quantile(values, [.05,.5,.95]).tolist()))}
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('files', nargs='+')
@@ -155,6 +175,7 @@ def main():
     if any(Path(f).resolve() in [output/'report.json',output/'index.html'] for f in args.files):
         parser.error('Output would overwrite an input file.')
     report = audit(args.files)
+    report['diagnostics'] = diagnostic_data(report)
     output.mkdir(parents=True,exist_ok=True)
     (output/'report.json').write_text(json.dumps(report,indent=2,allow_nan=False)+'\n')
     compact = {k:v for k,v in report.items() if k!='records'}

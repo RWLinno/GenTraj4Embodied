@@ -18,3 +18,8 @@ python -m inspector.audit experiments/data/val.h5 experiments/data/test.h5 --out
 速度与加速度使用真实时间戳计算；单位继承输入，不能擅自称为米/秒。报告不检查碰撞、机械臂逆运动学、关节限制或任务成功，零报错不代表可以安全执行。
 
 旧实现仍保留供参考，当前维护入口为 `inspector.audit`，不再把模型文件数量当作实验成果。[评估依据与转型说明](ASSESSMENT.md)。协议沿用 Apache-2.0。
+
+
+## Research context and diagnostics · 2026-10-14
+
+[中文研究评估与低成本路线](RESEARCH_REPORT.zh-CN.md) covers verified evidence, diffusion / flow-matching / VLA context, practical next steps, and stopping criteria. The live report now includes distribution diagnostics; research references are context, not implemented baselines.

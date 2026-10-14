@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "sources": [
     {
       "file": "val.h5",
@@ -73089,5 +73089,121 @@
       ]
     }
   ],
-  "scope": "Input files only. No collision, IK, robot success, angular dynamics, or distribution-quality test. Endpoint grouping rounds poses to 6 decimals and ignores task/scene metadata. Zero flags is not a robot-safety certificate."
+  "scope": "Input files only. No collision, IK, robot success, angular dynamics, or distribution-quality test. Endpoint grouping rounds poses to 6 decimals and ignores task/scene metadata. Zero flags is not a robot-safety certificate.",
+  "diagnostics": {
+    "splits": [
+      {
+        "source": "val.h5",
+        "records": 2027,
+        "tasks": {
+          "pouring": 704,
+          "assembly": 765,
+          "pick_and_place": 558
+        }
+      },
+      {
+        "source": "test.h5",
+        "records": 2028,
+        "tasks": {
+          "pick_and_place": 551,
+          "assembly": 765,
+          "pouring": 712
+        }
+      }
+    ],
+    "histograms": {
+      "max_speed": {
+        "counts": [
+          548,
+          1091,
+          643,
+          564,
+          417,
+          237,
+          148,
+          122,
+          75,
+          73,
+          59,
+          30,
+          22,
+          17,
+          5,
+          4
+        ],
+        "edges": [
+          0.24313346342633455,
+          0.38783460012057014,
+          0.5325357368148058,
+          0.6772368735090414,
+          0.8219380102032771,
+          0.9666391468975127,
+          1.1113402835917483,
+          1.2560414202859838,
+          1.4007425569802194,
+          1.545443693674455,
+          1.6901448303686908,
+          1.8348459670629262,
+          1.979547103757162,
+          2.1242482404513976,
+          2.268949377145633,
+          2.413650513839869,
+          2.5583516505341044
+        ],
+        "n": 4055,
+        "excluded": 0,
+        "quantiles": {
+          "p05": 0.34384667175243344,
+          "p50": 0.6145256919220177,
+          "p95": 1.5610414555290637
+        }
+      },
+      "max_acceleration": {
+        "counts": [
+          169,
+          710,
+          1059,
+          874,
+          538,
+          303,
+          167,
+          85,
+          69,
+          35,
+          14,
+          16,
+          4,
+          5,
+          3,
+          4
+        ],
+        "edges": [
+          3.2328523660167305,
+          4.176034591426732,
+          5.119216816836734,
+          6.062399042246736,
+          7.005581267656738,
+          7.948763493066739,
+          8.891945718476741,
+          9.835127943886743,
+          10.778310169296745,
+          11.721492394706747,
+          12.664674620116749,
+          13.60785684552675,
+          14.551039070936753,
+          15.494221296346755,
+          16.437403521756757,
+          17.38058574716676,
+          18.32376797257676
+        ],
+        "n": 4055,
+        "excluded": 0,
+        "quantiles": {
+          "p05": 4.246106561837402,
+          "p50": 6.145146583658665,
+          "p95": 10.226993911502149
+        }
+      }
+    }
+  }
 }

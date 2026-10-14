@@ -33,3 +33,10 @@ The new inspector computes position derivatives with real time intervals and can
 - Provide a readable interactive report and concise installation/schema documentation.
 
 No acceptance probability, novelty claim, or paper submission is implied by this salvage decision.
+
+
+## Report revision — 2026-10-14
+
+Added a sourced Chinese research assessment, evidence boundaries, estimated next-step costs and explicit stopping criteria. Expanded the live report with quantitative distribution diagnostics and research context from Diffusion Policy, π₀/π₀.₅ and LeRobot. No new model-training claims. Local numerical checks and mobile layout checks passed; GitHub Actions independently validates the published revision. See RESEARCH_REPORT.zh-CN.md for the detailed decision.
+
+After remote publication and verification, local working copies and task-owned temporary materials are scheduled for deletion at the owner’s request. Public repositories and the existing private preservation archive remain the recovery sources.
