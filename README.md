@@ -1,281 +1,92 @@
-# Generative Models for 3D End-Effector Trajectory Generation
+# GenTraj4Embodied · Pose Trajectory Inspector
 
+**Check your trajectory data before trusting your model scores.**
 
-## Structure
-```
-GenTraj4Embodied/
-├── README.md # Project documentation
-├── requirements.txt  # Python dependencies
-├── run.py  # Main execution script
-├── config.yaml # Configuration parameters
-├── data/ # Data directory
-│   ├── synthetic/  # Generated multi-modal trajectories
-│   ├── real/ # Real-world trajectory data (if available)
-│   └── random/  # random data
-├── src/  # Core implementation
-│   ├── data/ # Data processing modules
-│   │   ├── dataset.py  # PyTorch dataset implementations
-│   │   ├── data_generator.py # synthetic data generation
-│   │   └── transforms.py # augmentation and preprocessing
-│   ├── models/ # Base model definitions
-│   ├── training/ # Training infrastructure
-│   │   └── trainer.py  # Unified training framework
-│   ├── evaluation/ # Evaluation framework
-│   │   ├── evaluator.py  # Comprehensive evaluation system
-│   │   └── metrics.py  # Trajectory quality metrics
-│   └── utils/  # Utility functions
-│       ├── config.py # Configuration management
-│       ├── logger.py # Logging utilities
-│       ├── math_utils.py # Mathematical operations
-│       └── visualization.py  # 3D trajectory visualization
-├── baselines/  # Model implementations
-│   ├── .../ # baselines name
-│   │   └── model.py # Main model architecture
-├── scripts/  # Experimental scripts
-│   ├── train_all_models.py # Batch training script
-│   ├── evaluate_models.py  # Comprehensive evaluation
-│   ├── generate_data.py  # Data generation pipeline
-│   └── visualize_results.py  # Result visualization
-├── experiments/  # Experimental results
-│   ├── configs/  # Experiment configurations
-│   ├── logs/ # Training logs and metrics
-│   ├── checkpoints/  # Model checkpoints
-│   └── results/  # Evaluation results and analysis
-└── ... # others
-```
+[Open the audit report →](https://rwlinno.github.io/GenTraj4Embodied/) · [中文说明](README.zh-CN.md) · [Companion diffusion playground](https://rwlinno.github.io/trajectory-playground/)
 
-## Quick Start
+A lightweight, model-free audit CLI for HDF5 pose trajectories. It produces a machine-readable JSON report and a standalone interactive HTML report with trajectory projections. Only NumPy and h5py are required; no GPU, PyTorch, model weights, or server is needed to run the audit.
 
-### 1. Environment Setup
-```bash
-git clone https://github.com/RWLinno/GenTraj4Embodied.git
-cd GenTraj4Embodied
+This repository began as a broad trajectory-generation prototype. The maintained entry point is now **`python -m inspector.audit`**. The old model and training files are retained as experimental reference, not as a verified model benchmark. See [the project assessment](ASSESSMENT.md).
 
-conda create -n GTL python==3.11
-conda activate GTL
-pip install -r requirements.txt
+## What it checks
 
-# or venv
-python -m venv venv
-source venv/bin/activate  # for Linux/Mac
-pip install -r requirements.txt
-```
+- Array dimensions, finite values, and strictly increasing timestamps.
+- Unit quaternion integrity and start/end pose agreement. Quaternion sign is treated correctly: `q` and `-q` describe the same orientation.
+- Position speed and acceleration computed from **actual, possibly nonuniform timestamps**.
+- Record-count and per-record length metadata consistency. Variable-length trajectories are supported.
+- Exact stored trajectory duplicates across files, and repeated endpoint conditions using six-decimal pose rounding.
+- Input SHA-256 fingerprints, task counts, waypoint-length distributions and per-record findings.
 
-### 2. Data Generation
-Generate multi-modal synthetic trajectory dataset:
+It **does not** certify robot safety, collision freedom, IK feasibility, joint limits, task success, or generative-model quality. Coordinate units are inherited from the input. Repeated endpoint groups ignore scene/task metadata and are informational, not automatic evidence of leakage or valid multimodality.
+
+## Run in two commands
+
+Use Python 3.10+ in a virtual environment:
 
 ```bash
-# Generate synthetic trajectories with multi-modal characteristics
-python run.py --mode generate
-
-# Or use the dedicated script (if available)
-python scripts/generate_data.py --config config.yaml
-
-# Options:
-# --num_trajectories 10000    # Number of trajectories per task
-# --task_types pick,pour,assemble  # Task categories
-# --modalities 3               # Number of behavioral modalities per task
-# --workspace_size 1.0         # Workspace dimensions (meters)
+python -m pip install -r inspector/requirements.txt
+python -m inspector.audit experiments/data/val.h5 experiments/data/test.h5 --out audit-output
 ```
 
-### 3. Model Training
+Open `audit-output/index.html` directly in your browser. It contains the report data and has no external script, font, or network dependency. `report.json` includes every record's statistics. Input files are read-only.
 
-Train individual models or all models simultaneously:
+For your own data:
 
 ```bash
-# Train all models with default configuration
-python scripts/train_all_models.py --config config.yaml
-
-# for specific model
-python run.py --model mlp --mode train --config config.yaml
-python run.py --model mlp --mode evaluate
-python run.py --model mlp --mode test
-
-# Advanced training options
-python run.py --model diffusion_policy --mode train --batch_size 32 --learning_rate 1e-4 --epochs 100 --gpu 0
+python -m inspector.audit train.h5 validation.h5 test.h5 --out audit-output --strict
 ```
 
-### 4. Evaluation and Analysis
-Comprehensive model evaluation and comparison:
+`--strict` exits 1 if there are integrity flags, missing/unreadable inputs, or exact cross-file trajectory duplicates. Endpoint overlaps alone are informational. Without it, the tool generates the report even when it finds problems. Reusing an output directory replaces its report files.
+
+### Supported HDF5 layout
+
+Each trajectory is a top-level group, with four required datasets:
+
+```
+trajectory_0/
+  trajectory    float[N,7]    # x,y,z plus four quaternion components
+  timestamps    float[N]     # strictly increasing; units define speed units
+  start_pose    float[7]
+  end_pose      float[7]
+```
+
+Optional group attributes: `task_name`, `modality`, `length`. Optional root attributes: `num_trajectories`, `trajectory_length` (reported as nominal only). Quaternion component order must be consistent across trajectory and endpoints; these norm/sign/dot-product checks do not require choosing xyzw vs wxyz. At least two waypoints are required. Use distinct filenames for the inputs. Other HDF5 layouts need an adapter; this tool does not guess schemas.
+
+## Published example: real files from this prototype
+
+[Full report](docs/report.json) · [Interactive report](https://rwlinno.github.io/GenTraj4Embodied/)
+
+| Check | Observed result |
+|---|---:|
+| Validation + test trajectories | 4,055 |
+| Record integrity flags under the listed checks | 0 |
+| Waypoints per trajectory | 45–54 |
+| Unique endpoint conditions | 4,055 |
+| Repeated endpoint conditions | 0 |
+| Exact cross-file trajectory duplicates | 0 |
+| Median per-trajectory maximum speed | 0.6145 coordinate units / time unit |
+| Median per-trajectory maximum acceleration | 6.1451 coordinate units / time unit² |
+
+A zero-flag report means these specific checks passed. It does not imply task feasibility or model readiness. The published audit covers `val.h5` and `test.h5` only, not the training set. Acceleration here is the difference of interval velocities divided by the distance between interval mid-times; it is a finite-difference diagnostic, not a smoothed physical measurement.
+
+The absence of repeated endpoint groups explains why this dataset cannot directly provide a fixed-condition reference bank for measuring multimodal coverage. It does not mathematically prove that a generative model cannot learn a conditional distribution from such data.
+
+## Verify and extend
+
 ```bash
-```
-## Data Format and Specifications
-
-### Trajectory Data Structure
-
-```python
-{
-    'start_pose': [x, y, z, qx, qy, qz, qw],     # Start pose (position + quaternion)
-    'end_pose': [x, y, z, qx, qy, qz, qw],       # Goal pose (position + quaternion)
-    'trajectory': [                               # Trajectory waypoints
-        [x, y, z, qx, qy, qz, qw, t],            # Each point: pose + timestamp
-        ...
-    ],
-    'task_id': int,                              # Task identifier (0: pick, 1: pour, 2: assemble)
-    'modality': int,                             # Behavioral modality (0: direct, 1: arc, 2: detour)
-    'workspace_bounds': [[x_min, x_max], [y_min, y_max], [z_min, z_max]],
-    'constraints': {                             # Task-specific constraints
-        'collision_objects': [...],              # Obstacle definitions
-        'joint_limits': [...],                   # Kinematic constraints
-        'velocity_limits': [...]                 # Dynamic constraints
-    }
-}
+python -m unittest discover -s tests -v
+python -m inspector.audit experiments/data/val.h5 experiments/data/test.h5 --out audit-output --strict
+python scripts/verify_inspector_report.py audit-output/report.json docs/report.json
 ```
 
-### Multi-Modal Task Categories
+CI exercises nonuniform timing, quaternion sign equivalence, invalid inputs, endpoint mismatches, duplicates, safe HTML serialization and strict exit behavior, then regenerates the published audit and compares all fields to the committed JSON (metadata/counts exact; absolute floating-point tolerance 1e-7, relative tolerance 1e-10). Trajectory previews show the first eight readable records per file in lexicographic group order; the audit statistics always use all records.
 
-#### Pick-and-Place Tasks (40% of dataset)
-- **Direct Mode**: Straight-line approach with minimal deviation
-- **Arc Mode**: Curved trajectory with intermediate waypoints
-- **Detour Mode**: Obstacle-avoiding path with strategic waypoints
+Useful extensions include adapters for other dataset layouts, angular-velocity diagnostics, and optional scene-aware collision checks. Keep those checks explicit rather than labeling a generic score “physical feasibility”.
 
-#### Pouring Tasks (30% of dataset)
-- **45° Tilt**: Standard pouring angle for controlled flow
-- **90° Tilt**: Rapid pouring for time-critical scenarios
-- **30° Tilt**: Gentle pouring for delicate materials
+## Relationship to Trajectory Playground
 
-#### Assembly Tasks (30% of dataset)
-- **Direct Insertion**: Straight approach with precise alignment
-- **Spiral Insertion**: Rotational approach for tight tolerances
-- **Lateral Insertion**: Side approach for constrained spaces
+[Trajectory Playground](https://github.com/RWLinno/trajectory-playground) teaches why squared-error regression can average two valid routes into a collision. This repository addresses the complementary question: **does the data and evaluation protocol support the claim you want to make?**
 
-## Evaluation Metrics and Analysis
+## License
 
-### Quantitative Metrics
-
-#### 1. Trajectory Quality
-- **Smoothness**: $S = \frac{1}{N-2} \sum_{i=1}^{N-2} \|\mathbf{p}_{i+2} - 2\mathbf{p}_{i+1} + \mathbf{p}_i\|$
-- **Path Efficiency**: $E = \frac{d(\mathbf{p}_s, \mathbf{p}_g)}{\sum_{i=1}^{N-1} d(\mathbf{p}_i, \mathbf{p}_{i+1})}$
-- **Execution Time**: Total trajectory duration
-
-#### 2. Task Completion
-- **Goal Accuracy**: $A = \exp(-\|\mathbf{p}_N - \mathbf{p}_g\|^2 / 2\sigma^2)$
-- **Success Rate**: Binary task completion metric
-- **Constraint Satisfaction**: Collision-free and kinematically feasible
-
-#### 3. Behavioral Diversity
-- **Inter-trajectory Distance**: Hausdorff distance between generated paths
-- **Mode Coverage**: Entropy of trajectory clusters
-- **Novelty Score**: Distance to nearest training example
-
-#### 4. Computational Performance
-- **Inference Time**: Generation latency per trajectory
-- **Memory Usage**: Peak GPU memory consumption
-- **Training Efficiency**: Convergence rate and stability
-
-### Statistical Analysis Framework
-
-```python
-# Example evaluation script
-from src.evaluation.evaluator import TrajectoryEvaluator
-from src.evaluation.metrics import *
-
-evaluator = TrajectoryEvaluator()
-results = evaluator.evaluate_all_models(
-    models=['diffusion_policy', 'transformer', 'vae', 'mlp', 'gflownets'],
-    test_dataset=test_data,
-    metrics=['smoothness', 'efficiency', 'diversity', 'success_rate'],
-    num_samples=1000,
-    confidence_level=0.95
-)
-
-# Generate statistical significance tests
-evaluator.statistical_analysis(results, test='wilcoxon')
-evaluator.generate_report(results, output_dir='experiments/results/')
-```
-
-### Custom Model Implementation
-
-```python
-from src.models.base_model import BaseTrajectoryModel
-import torch
-import torch.nn as nn
-
-class CustomModel(BaseTrajectoryModel):
-    def __init__(self, config):
-        super().__init__(config)
-        self.network = self._build_network()
-    
-    def _build_network(self):
-        # Implement custom architecture
-        return nn.Sequential(...)
-    
-    def forward(self, start_pose, end_pose, context=None):
-        # Implement forward pass
-        return trajectory
-    
-    def loss_function(self, predicted, target):
-        # Implement custom loss
-        return loss
-    
-    def generate(self, start_pose, end_pose, num_samples=1):
-        # Implement trajectory generation
-        return trajectories
-
-# Register custom model
-from src.training.trainer import ModelRegistry
-ModelRegistry.register('custom_model', CustomModel)
-```
-
-### Custom Evaluation Metrics
-```python
-from src.evaluation.metrics import BaseMetric
-
-class CustomMetric(BaseMetric):
-    def __init__(self, name='custom_metric'):
-        super().__init__(name)
-    
-    def compute(self, predicted_trajectories, target_trajectories):
-        # Implement custom metric computation
-        return metric_value
-    
-    def aggregate(self, metric_values):
-        # Implement aggregation strategy
-        return aggregated_value
-
-# Register custom metric
-from src.evaluation.evaluator import MetricRegistry
-MetricRegistry.register('custom_metric', CustomMetric)
-```
-
-## Troubleshooting
-
-### Common Issues
-
-#### Training Convergence Problems
-```bash
-# Check data distribution
-python scripts/analyze_data.py --data_dir data/synthetic/
-
-# Adjust learning rate
-python run.py --model diffusion_policy --learning_rate 5e-5
-
-# Enable gradient clipping
-python run.py --model transformer --gradient_clip_norm 0.5
-```
-
-#### Memory Issues
-```bash
-# Reduce batch size
-python run.py --batch_size 16
-
-# Enable gradient checkpointing
-python run.py --gradient_checkpointing
-
-# Use mixed precision training
-python run.py --mixed_precision
-```
-
-#### Evaluation Errors
-```bash
-# Validate model checkpoints
-python scripts/validate_checkpoints.py --checkpoint_dir experiments/checkpoints/
-
-# Check data format
-python scripts/validate_data.py --data_dir data/processed/
-```
-
-## Citation
-If you use this work in your research, please cite:
-```
-```
+Apache-2.0, as in the original repository. The new inspector and report template use the same license. Historical prototype code has not been certified by the inspector tests; the unpublished manuscript and old result tables are not evidence of validated comparative performance.
